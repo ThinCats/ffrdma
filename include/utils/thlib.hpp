@@ -1,0 +1,12 @@
+#ifndef THLIB_THLIB_HPP
+#define THLIB_THLIB_HPP
+
+#ifndef THLIB_NAMESPACE_BEGIN
+#define THLIB_NAMESPACE_BEGIN
+#endif
+
+#ifndef THLIB_NAMESPACE_END
+#define THLIB_NAMESPACE_END
+#endif
+
+#endif // THLIB_THLIB_HPP
