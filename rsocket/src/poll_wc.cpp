@@ -80,8 +80,10 @@ int resolve_wr_queue(Socket *socket_) {               // 处理 wr_queue 中的 
         if((stat = recv_wc_handle(socket_, wc, &recv_msg)) == RDMAREADSOLVED) {
             queue_push(socket_->recv_queue, recv_msg);
             flag = 0;
-        } else if (stat == ERRORWC) {
-            return -1;
+        } else {
+                if (stat == ERRORWC) {
+                return -1;
+            }
         }
         free(wc);
     }

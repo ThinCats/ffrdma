@@ -363,6 +363,57 @@ int send_(Socket *socket_, AMessage *msg) {      // 当一次性send操作数超
 }
 
 
+AMessage *irecv_(Socket *socket_) {            // 用户提供指针地址，函数来填充 *recv_buffer,用户需要自己free
+    int flag = 1;
+    struct ibv_wc wc;
+    void *wc_save;
+    struct ibv_cq *cq;
+    AMessage *recv_msg;
+
+    if(pthread_mutex_trylock(&socket_->close_lock)) {
+        return NULL;
+    }
+    pthread_mutex_unlock(&socket_->close_lock);
+
+    while(ibv_poll_cq(socket_->cq, 1, &wc) == 1){
+        if(wc.opcode == IBV_WC_SEND || wc.opcode == IBV_WC_RDMA_READ){
+            continue;
+        } else {
+            wc_save = malloc(sizeof(struct ibv_wc));
+            memcpy(wc_save, &wc, sizeof(wc));
+            queue_push(socket_->wr_queue, wc_save);
+        }
+    }
+    flag = resolve_wr_queue(socket_);
+    if (flag == -1) {
+        socket_->close_flag = 1;
+        return NULL;
+    }
+
+    if((recv_msg = (AMessage *)queue_pop(socket_->recv_queue)) != NULL) {
+        return recv_msg;
+    } else if(pthread_mutex_trylock(&socket_->close_lock)) {    // 往下 *recv_buffer 都为 NULL
+        return NULL;
+    } else {
+        pthread_mutex_unlock(&socket_->close_lock);
+        // if(socket_->close_flag == 1){
+        //     return ;
+        // }
+        // while(flag == 1){
+        //     if(poll_wc(socket_, NULL) == -1) {
+        //         return NULL;
+        //     }
+        //     flag = resolve_wr_queue(socket_);
+        // }
+        return NULL;
+    }
+
+    // if(flag == -1) {
+    //     socket_->close_flag = 1;                  // 断开连接会将 close_flag 设成 1
+    // }
+    // return (AMessage *)queue_pop(socket_->recv_queue);
+}
+
 AMessage *recv_(Socket *socket_) {            // 用户提供指针地址，函数来填充 *recv_buffer,用户需要自己free
     int flag = 1;
     struct ibv_wc wc;

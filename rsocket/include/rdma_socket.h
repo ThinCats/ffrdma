@@ -95,6 +95,7 @@ Socket *accept_(Socket *socket_, struct Receiver_ *receiver);
 int bind_(Socket *socket_, void *addr, int protocol);
 void close_(Socket *socket_);
 AMessage *recv_(Socket *socket_);
+AMessage *irecv_(Socket *socket_);
 Socket *recv_(Socket *socket_, Queue *de_queue);
 int send_(Socket *socket_, AMessage *msg);
 

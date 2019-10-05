@@ -237,7 +237,7 @@ int RDMA_Send(void *buf, int count, int dest, int rdma_group)
 int RDMA_Recv(void *buf, int count, int source, int rdma_group)
 {
     int local_rank = RDMA_Rank();
-    int rc = 1;
+    int rc = 0;
     if (local_rank == source)
     {
         return -1;
@@ -245,11 +245,42 @@ int RDMA_Recv(void *buf, int count, int source, int rdma_group)
     Socket *listen = RDMA_Socket(source);
     if (count < 0)
     {
-        rc = 0;
+        rc = 1;
         return rc;
     }
     AMessage *buffer = (AMessage *)1;
     buffer = recv_(listen);
+    if (buffer->length == count && buffer->node_id == source)
+    {
+        memcpy(buf, buffer->buffer, count);
+    }
+    else
+    {
+        buf = nullptr;
+    }
+    AMessage_destroy(buffer);
+    return rc;
+}
+
+int RDMA_Irecv(void *buf, int count, int source, int rdma_group)
+{
+    int local_rank = RDMA_Rank();
+    int rc = 0;
+    if (local_rank == source)
+    {
+        return -1;
+    }
+    Socket *listen = RDMA_Socket(source);
+    if (count < 0)
+    {
+        rc = 1;
+        return rc;
+    }
+    AMessage *buffer = (AMessage *)1;
+    buffer = irecv_(listen);
+    if(listen->close_flag == 1){
+        return 1;
+    }
     if (buffer->length == count && buffer->node_id == source)
     {
         memcpy(buf, buffer->buffer, count);
@@ -368,6 +399,7 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
         send_(socket, msg);
         AMessage_destroy(msg);
     }
+    return 0;
 }
 
 int RDMA_Allreduce(const void *sendbuf, void *recvbuf,
@@ -379,4 +411,5 @@ int RDMA_Allreduce(const void *sendbuf, void *recvbuf,
         RDMA_Reduce(sendbuf, recvbuf, count, datatype, op, 0, rdma_group);
         RDMA_MakeAll(recvbuf, count, 0, rdma_group);
     }
+    return 0;
 }
