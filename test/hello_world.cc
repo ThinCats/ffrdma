@@ -1,6 +1,7 @@
 #include "mpi.hpp"
 #include "stdio.h"
 #include "amessage.h"
+#include <malloc.h>
 #include "rdma_socket.h"
 
 int main(int argc, char** argv)
