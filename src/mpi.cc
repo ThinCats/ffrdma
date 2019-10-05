@@ -12,7 +12,7 @@ int RDMA_MakeAll(void *buf, int count_in_byte, int root, int rdma_group)
     int local_rank = RDMA_Rank();
     int whole_ranks = RDMA_Size();
     int res =-1;
- 
+
     if(buf == NULL) return 1;
     if(count_in_byte <= 0) return 2;
     if(root >= whole_ranks || root < 0) return 3;
@@ -24,6 +24,7 @@ int RDMA_MakeAll(void *buf, int count_in_byte, int root, int rdma_group)
         msg = AMessage_create((void *)buf, count_in_byte, 0);
         for (int i = 0; i < whole_ranks; i++)
         {
+            printf("socket:%x\n",RDMA_Socket(i));
             if (i == local_rank) continue;
             res = send_(RDMA_Socket(i), msg);
             if(res != 0) {AMessage_destroy(msg);return res;}
@@ -35,7 +36,7 @@ int RDMA_MakeAll(void *buf, int count_in_byte, int root, int rdma_group)
         auto msg = recv_(RDMA_Socket(root));
         if (msg == NULL)
             return 4;
-        if (msg->length == count_in_byte && msg->node_id == root)
+        if (msg->length == count_in_byte)
         {
             memcpy(buf, msg->buffer, count_in_byte);
             AMessage_destroy(msg);
@@ -82,9 +83,6 @@ int RDMA_ExchangeAll_exp(const void *sendbuf, int sendcount, void *recvbuf,
 
     if(sendbuf == NULL || recvbuf == NULL) return 1;
     if(sendcount <= 0 || recvcount <= 0) return 2;
-
-    unsigned char *buffer =
-        (unsigned char *)malloc(sizeof(unsigned char) * sendcount);
 
     auto send_msg = AMessage_create((void *)sendbuf, sendcount, 0);
 
@@ -133,16 +131,14 @@ int RDMA_ExchangeAll(const void *sendbuf, int sendcount, void *recvbuf,
     if(sendbuf == NULL || recvbuf == NULL) return 1;
     if(sendcount <= 0 || recvcount <= 0) return 2;
 
-    unsigned char *buffer =
-        (unsigned char *)malloc(sizeof(unsigned char) * sendcount);
     for (int i = 0; i < whole_ranks; i++)
     {
         if (local_rank == i)
         {
             res = RDMA_MakeAll((void *)sendbuf, sendcount, i, rdma_group);
             if(res != 0) return res;
-            
-            memcpy(((unsigned char *)recvbuf) + sendcount * i, buffer, sendcount);
+
+            memcpy(((unsigned char *)recvbuf) + sendcount * i, sendbuf, sendcount);
         }
         else
         {
@@ -180,7 +176,7 @@ int RDMA_GetAll(const void *sendbuf, int sendcount, void *recvbuf,
                 msg = recv_(RDMA_Socket(i));
                 if (msg == NULL)
                     return 4;
-                if (msg->length == recvcount && msg->node_id == i)
+                if (msg->length == recvcount)
                 {
                     memcpy(((unsigned char *)recvbuf) + recvcount * i, msg->buffer,
                             recvcount);
@@ -240,7 +236,7 @@ int RDMA_Scatter(const void *sendbuf, int sendcount, void *recvbuf,
         msg = recv_(RDMA_Socket(root));
         if (msg == NULL)
             return -1;
-        if (msg->length == recvcount && msg->node_id == root)
+        if (msg->length == recvcount)
         {
             memcpy(recvbuf, msg->buffer, recvcount);
             AMessage_destroy(msg);
@@ -439,7 +435,7 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
     return 0;
 }
 
-int RDMA_Allreduce(const void *sendbuf, void *recvbuf,
+int RDMA_Allreduce(void *sendbuf, void *recvbuf,
                    int count, int datatype, int op, int rdma_group)
 {
     int local_rank = RDMA_Rank();

@@ -1,9 +1,10 @@
 #ifndef MPI_HPP
 #define MPI_HPP
+#include "malloc.h"
 #include "fmpi.hpp"
     int RDMA_Send(const void *buf, int count, int dest,int rdma_group);
     int RDMA_Recv(void *buf, int count, int source, int rdma_group);
-    int RDMA_Reduce(const void *sendbuf, void *recvbuf, int count, int datatype, int op, int root, int rdma_group);
+    int RDMA_AllReduce(const void *sendbuf, void *recvbuf, int count, int datatype, int op, int root, int rdma_group);
     int RDMA_Reduce(const void *sendbuf, void *recvbuf, int count, int datatype, int op, int root, int rdma_group);
     int RDMA_MakeAll(void *buf, int count_in_byte, int root, int rdma_group);
     int RDMA_GetOffsetRank(int offset, int is_right_side, int rdma_group);
