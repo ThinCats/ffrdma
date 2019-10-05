@@ -6,15 +6,24 @@ option(BUILD_TEST "Test" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-if (DEBUG)
+if(DEBUG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0")
 endif(DEBUG)
 
-file(GLOB FMPI_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
+file(GLOB_RECURSE
+     FMPI_SRC_LIST
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cc
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
+     "src/process.cc")
+file(GLOB_RECURSE FMPI_HEADER_LIST
+     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+     "include/*.hpp" "include/**/*.hpp")
+
+message(${FMPI_SRC_LIST})
 add_subdirectory(rsocket)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(fmpi ${FMPI_SRC_LIST})
+add_library(fmpi ${FMPI_SRC_LIST} ${FMPI_HEADER_LIST})
 
 target_link_libraries(fmpi rsocket)
 
@@ -22,10 +31,9 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif(BUILD_TESTS)
 
-
-# set(CMAKE_CXX_FLAGS "${CMAK_CXX_FLAGS} -O0 -g2")
-
-
-# add_executable(mpi-rdma main.cpp)
-# add_executable(decoder decoder.cpp)
-# target_link_libraries(decoder fmpi)
+source_group(TREE
+             "${CMAKE_CURRENT_SOURCE_DIR}/include"
+             PREFIX
+             "Header Files"
+             FILES
+             ${FMPI_HEADER_LIST})
