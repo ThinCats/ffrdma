@@ -6,6 +6,7 @@
 #include "amessage.h"
 #include "receiver.h"
 
+#include <string.h>
 
 #ifndef RDMA_SOCKET
 #define RDMA_SOCKET
@@ -35,7 +36,7 @@ typedef struct Msg_ {
 typedef struct MetaData_ {
     int type;                              //  METADATA_ACK 和 #define METADATA_NORMAL 和 #define METADATA_CLOSE
     int flag;
-    size_t length;                         
+    size_t length;
     uint64_t msg_addr;
     uint64_t mr_addr;
     uint32_t rkey;
@@ -47,11 +48,11 @@ typedef struct Rinfo_ {
 }Rinfo;
 
 typedef struct Socket_ {
-    struct rdma_event_channel *ec;              
+    struct rdma_event_channel *ec;
     struct rdma_cm_id *id;                       // rdma_create_qp() 需要调用
     struct ibv_pd *pd;                           // ibv_reg_mr() 需要调用
     struct ibv_qp *qp;                           // ibv_post_recv() 需要调用
-    
+
     struct ibv_cq *cq;
     struct ibv_comp_channel *cc;
 

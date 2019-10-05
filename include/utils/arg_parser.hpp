@@ -333,10 +333,10 @@ public:
           prev_arg = std::string::npos;
         }
       }
-    } catch (std::out_of_range &) {
-      exitProgram("Unknown Parsed Arguments");
-    } catch (std::invalid_argument &) {
-      exitProgram("Unknown Parsed Arguments");
+    } catch (std::out_of_range & t) {
+      exitProgram("Unknown Parsed Arguments " + std::string(t.what()));
+    } catch (std::invalid_argument & t) {
+      exitProgram("Unknown Parsed Arguments t" + std::string(t.what()));
     }
 
     // Args not valid

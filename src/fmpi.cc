@@ -1,8 +1,8 @@
-#include "../include/fmpi.hpp"
-#include "../include/process/process.hpp"
-#include "../include/utils/decoder.hpp"
-#include "../include/utils/rank_alg.hpp"
-#include "../include/utils/arg_parser.hpp"
+#include "fmpi.hpp"
+#include "process.hpp"
+#include "utils/decoder.hpp"
+#include "utils/rank_alg.hpp"
+#include "utils/arg_parser.hpp"
 
 thlib::ArgObj parseArgs(int argc, char **argv) {
   thlib::ArgParser argParser("Rdma Run", "r_help");
@@ -18,8 +18,8 @@ thlib::ArgObj parseArgs(int argc, char **argv) {
 int RDMA_Init(int argc, char **argv) {
   // parse arguments
   auto argObj = parseArgs(argc, argv);
-  auto myIp = argObj.getValStr("r_myIp");
-  auto myPort = argObj.getValInt("r_myPort");
+  auto myIp = argObj.getValStr("r_myip");
+  auto myPort = argObj.getValInt("r_myport");
   auto hostmapStr = argObj.getValStr("r_hostmap");
 
   // decode

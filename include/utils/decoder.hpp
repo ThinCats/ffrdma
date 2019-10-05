@@ -50,7 +50,7 @@ public:
 
 private:
   const std::string &m_data;
-  const std::string &m_delim;
+  std::string m_delim;
   // inner state
   State m_state = START;
   std::size_t pos_start = 0, pos_end = 0;
