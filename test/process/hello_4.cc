@@ -7,10 +7,12 @@ int main(int argc, char **argv) {
   RDMA_Init(argc, argv);
   int local_rank = RDMA_Rank();
   printf("local_rank = %d\n", local_rank);
-  int other_rank = local_rank ? 0 : 1;
+  int other_rank = local_rank % 2 ? local_rank - 1 : local_rank + 1;
+
   Socket *socket = RDMA_Socket(other_rank);
   printf("socket: %x\n", socket);
-  if (local_rank == 0) {
+
+  if (local_rank % 2 == 0) {
     const char *msg = "Hello";
     AMessage *amsg = AMessage_create((void *)msg, 6, 0);
     if (send_(socket, amsg)) {
@@ -43,7 +45,7 @@ int main(int argc, char **argv) {
   }
 
   printf("Reach end\n");
-  if (local_rank == 0) {
+  if (local_rank % 2 == 0) {
     getchar();
   }
   RDMA_Finalize();
