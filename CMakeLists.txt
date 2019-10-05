@@ -4,4 +4,5 @@ project(ffrdma VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-add_executable(mpi-rdma main.cpp)
+# add_executable(mpi-rdma main.cpp)
+add_executable(decoder decoder.cpp)

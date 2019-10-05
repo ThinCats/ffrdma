@@ -8,6 +8,10 @@
 
 namespace ffrdma {
 struct RdmaProcessInfo {
+  RdmaProcessInfo(int r, const std::string &i, int p):
+    rank(r), ip(i), port(p)
+   {}
+
   int rank;
   std::string ip;
   int port;

@@ -1,6 +1,5 @@
 #ifndef SERIALIZER_HPP
 #define SERIALIZER_HPP
-#include "debug.hpp"
 #include "types.hpp"
 #include <map>
 #include <set>
@@ -74,7 +73,6 @@ public:
       auto addrPair = decodeAddrPair(sp.getNext());
       auto host = addrPair.first;
       auto ports = decodePortList(addrPair.second);
-      std::cout << ports << std::endl;
       auto retPair =
           hostmap.insert({host, std::set<int>(ports.begin(), ports.end())});
 

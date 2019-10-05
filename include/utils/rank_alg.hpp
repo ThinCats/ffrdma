@@ -27,6 +27,17 @@ struct RankAlg {
     }
     return procArr;
   }
+
+  static int getRank(const RankRdmaProcessInfoArray&arr, const std::string& ip, int port) {
+    for (auto &pi: arr) {
+      if (pi.ip == ip && pi.port == port) {
+        return pi.rank;
+      }
+    }
+    // not found
+    throw std::invalid_argument("Not find rank according to ip and addr");
+    return -1;
+  }
 };
 
 } // namespace ffrdma

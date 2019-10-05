@@ -10,7 +10,7 @@
 #endif
 
 namespace ffrdma {
-std::ostream &operator<<(std::ostream &out, const RdmaProcess &proc) {
+std::ostream &operator<<(std::ostream &out, const RdmaProcessInfo &proc) {
   out << "rank: " << proc.rank << " port: " << proc.port << " ip: " << proc.ip << std::endl;
   return out;
 }
