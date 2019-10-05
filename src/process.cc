@@ -1,6 +1,8 @@
 #include "process.hpp"
 #include "rdma_socket.h"
 #include "utils/log.hpp"
+#include <iostream>
+#include <thread>
 
 // TODO: More elegant way
 Socket *const ffrdma::RdmaProcess::reconnect(int toRank) {
@@ -52,7 +54,9 @@ void ffrdma::RdmaProcess::setupAsClient() {
   assert(m_state == OPEN_PORT);
   // connect to all server with rank greater the me
   for (int rank = m_myRank + 1; rank < worldSize(); rank++) {
-    Socket *connSocket = connetToServer(rank);
+    Socket *connSocket =
+        connectToServer(rank, RetryPolicy(RetryPolicy::TryFailed, 10,
+                                          RetryPolicy::milliSecond(1000)));
     m_socketPool[rank] = connSocket;
   }
   m_state = CONNECTED_TO_ALL_SERVER;
@@ -88,7 +92,9 @@ Socket *ffrdma::RdmaProcess::reconnectAsServer(int fromRank) {
 }
 
 Socket *ffrdma::RdmaProcess::reconnectAsClient(int toRank) {
-  Socket *socket = connetToServer(toRank);
+  Socket *socket =
+      connectToServer(toRank, RetryPolicy(RetryPolicy::TryFailed, 5,
+                                          RetryPolicy::milliSecond(10)));
   // update socket pool
   close_(m_socketPool[toRank]);
   m_socketPool[toRank] = socket;
@@ -107,15 +113,35 @@ Socket *ffrdma::RdmaProcess::acceptFromClient(int fromRank) {
 }
 
 // helper function
-Socket *ffrdma::RdmaProcess::connetToServer(int toRank) {
+Socket *ffrdma::RdmaProcess::connectToServer(int toRank, RetryPolicy policy) {
   auto &pi = m_procInfos[toRank];
-  auto retPair = utils::createConnectToServer(pi.ip, pi.port, m_myRank);
-  // add to socket list
-  if (retPair.second == utils::ConnStatus::OK) {
-    return retPair.first;
-  } else {
-    // TODO: Implement
-    throw std::logic_error("Not implement");
+  int retryCnt = 0;
+  while (true) {
+    auto retPair = utils::createConnectToServer(pi.ip, pi.port, m_myRank);
+    // add to socket list
+    auto connStatus = retPair.second;
+    if (connStatus == utils::ConnStatus::OK) {
+      return retPair.first;
+    } else if (connStatus == utils::ConnStatus::CONN_ERROR) {
+      if (policy.policy == RetryPolicy::Never) {
+        // no retry
+        break;
+      }
+      if (policy.policy == RetryPolicy::TryFailed &&
+          retryCnt >= policy.retryTimes) {
+        // policy retry for some times
+        std::cout << "Retry failed after " << retryCnt << " End." << std::endl;
+        throw std::invalid_argument(
+            log::toString("Connect to server failed:", pi.ip, pi.port));
+      }
+      std::cout << "Retry: " << retryCnt << " Sleep for "
+                << policy.sleepTime.count() << "ms" << std::endl;
+      retryCnt++;
+      std::this_thread::sleep_for(policy.sleepTime);
+    } else {
+      // TODO: Implement
+      throw std::logic_error("Not implement");
+    }
   }
 }
 

@@ -12,16 +12,32 @@
 
 namespace ffrdma {
 
+struct RetryPolicy {
+  // ums
+  using milliSecond = std::chrono::duration<int, std::ratio<1, 1000>>;
+  enum Policy {
+    // Never retry
+    Never,
+    // Always retry
+    Always,
+    // Try N times then failed
+    TryFailed
+  };
+  RetryPolicy(Policy p, int c = 0, const milliSecond &st=milliSecond(0))
+      : policy(p), retryTimes(c), sleepTime(st) {}
+
+  Policy policy;
+  int retryTimes = 0;
+  milliSecond sleepTime;
+};
+
 class RdmaProcess {
 public:
   /**
    * @brief - the role in a rank
    */
-  enum RankType {
-    Server,
-    Client,
-    Self
-  };
+  enum RankType { Server, Client, Self };
+
 public:
   /**
    * @brief Init Singleton rdma process with configs
@@ -62,7 +78,7 @@ public:
 
   size_t worldSize() const { return this->m_procInfos.size(); }
   size_t myRank() const { return this->m_myRank; }
-  Socket * const getSocket(int rank) const {
+  Socket *const getSocket(int rank) const {
 #ifdef FFRDMA_ERROR_CHECK
     if (rank == m_myRank) {
       throw std::logic_error("can't get socket which is the same as my rank");
@@ -75,7 +91,7 @@ public:
   }
 
   // TODO: More elegant way
-  Socket* const reconnect(int toRank);
+  Socket *const reconnect(int toRank);
 
   ~RdmaProcess();
 
@@ -87,7 +103,7 @@ private:
 
   RdmaProcess() {}
 
-  RdmaProcess(const RdmaProcess&) = delete;
+  RdmaProcess(const RdmaProcess &) = delete;
 
   // !! @deprected
   // Init RdmaProcess by configs
@@ -120,8 +136,8 @@ private:
 
   Socket *acceptFromClient(int fromRank);
 
-// helper function
-  Socket* connetToServer(int toRank);
+  // helper function
+  Socket *connectToServer(int toRank, RetryPolicy policy);
 
   RankType rankType(int rank);
 

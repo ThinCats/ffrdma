@@ -7,7 +7,7 @@ typedef Socket_ Socket;
 
 namespace ffrdma {
 namespace utils {
-enum class ConnStatus { OK };
+enum class ConnStatus { OK, CONN_ERROR };
 
 std::string ipPortString(const std::string &ip, int port);
 

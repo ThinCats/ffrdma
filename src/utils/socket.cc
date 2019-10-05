@@ -41,7 +41,8 @@ std::pair<Socket *, ffrdma::utils::ConnStatus> ffrdma::utils::createConnectToSer
       connect_(&socket, ip.c_str(), std::to_string(port).c_str(), nodeId);
   if (status != 0) {
     free(socket);
-    throw std::runtime_error("connect to server: " + ipPortString(ip, port));
+    // throw std::runtime_error("connect to server: " + ipPortString(ip, port));
+    return {nullptr, ConnStatus::CONN_ERROR};
   }
 
   return {socket, ConnStatus::OK};
