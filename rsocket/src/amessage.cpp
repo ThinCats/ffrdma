@@ -1,6 +1,7 @@
 #include "../include/amessage.h"
 #include "../include/rdma_socket.h"
 #include <stdlib.h>
+#include <cstdio>
 
 
 
@@ -20,7 +21,8 @@ bool AMessage_check_sndmore(AMessage *msg) {
 }
 
 void AMessage_destroy(AMessage *msg) {
-    if(msg->if_free_buffer) {
+    if (msg->if_free_buffer)
+    {
         free(msg->buffer);
     }
     free(msg);

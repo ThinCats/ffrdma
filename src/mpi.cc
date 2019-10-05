@@ -3,6 +3,7 @@
 #include "receiver.h"
 #include "rdma_socket.h"
 #include <string.h>
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;
@@ -73,7 +74,7 @@ int RDMA_GetOffsetRank(int offset, int is_right_side, int rdma_group)
     return offset_rank;
 }
 
-int RDMA_ExchangeAll_exp(const void *sendbuf, int sendcount, void *recvbuf,
+int RDMA_ExchangeAll_exp(void *sendbuf, int sendcount, void *recvbuf,
                          int recvcount, int rdma_group)
 {
     int local_rank = RDMA_Rank();
@@ -123,7 +124,7 @@ int RDMA_ExchangeAll_exp(const void *sendbuf, int sendcount, void *recvbuf,
     return 0;
 }
 
-int RDMA_ExchangeAll(const void *sendbuf, int sendcount, void *recvbuf,
+int RDMA_ExchangeAll(void *sendbuf, int sendcount, void *recvbuf,
                      int recvcount, int rdma_group)
 {
     int local_rank = RDMA_Rank();
@@ -155,7 +156,7 @@ int RDMA_ExchangeAll(const void *sendbuf, int sendcount, void *recvbuf,
     return 0;
 }
 
-int RDMA_GetAll(const void *sendbuf, int sendcount, void *recvbuf,
+int RDMA_GetAll(void *sendbuf, int sendcount, void *recvbuf,
                 int recvcount, int root, int rdma_group)
 {
     int local_rank = RDMA_Rank();
@@ -204,7 +205,7 @@ int RDMA_GetAll(const void *sendbuf, int sendcount, void *recvbuf,
     return 0;
 }
 
-int RDMA_Scatter(const void *sendbuf, int sendcount, void *recvbuf,
+int RDMA_Scatter(void *sendbuf, int sendcount, void *recvbuf,
                  int recvcount, int root, int rdma_group)
 {
     int local_rank = RDMA_Rank();
@@ -338,16 +339,19 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
 {
     int local_rank = RDMA_Rank();
     int whole_rank = RDMA_Size();
+    // printf("%d %d %d %d\n", local_rank, whole_rank, root, count);
     if (local_rank == root)
     {
         memcpy(recvbuf, sendbuf, count);
-        AMessage *buffer = (AMessage *)1;
+        // printf("memcpy success\n");
+        AMessage *msg = (AMessage *)1;
         for (int i = 0; i < whole_rank; i++)
         {
             if (i == root)
                 continue;
             Socket *listen = RDMA_Socket(i);
-            auto msg = recv_(listen);
+            msg = recv_(listen);
+            // printf("success recv\n");
             if (datatype == 0)
             {
                 double *resbuf = (double *)recvbuf;
@@ -356,7 +360,9 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                 {
                     for (int j = 0; j < count/8; j++)
                     {
+                        // printf("%lf %lf\n", resbuf[j], msgbuffer[j]);
                         resbuf[j] = resbuf[j] + msgbuffer[j];
+                        // printf("%lf %lf\n", resbuf[j], msgbuffer[j]);
                     }
                 }
                 else if (op == 1)
@@ -382,7 +388,9 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                 {
                     for (int j = 0; j < count / 4; j++)
                     {
+                        // printf("%d %d\n", resbuf[j], msgbuffer[j]);
                         resbuf[j] = resbuf[j] + msgbuffer[j];
+                        // printf("%d %d\n", resbuf[j], msgbuffer[j]);
                     }
                 }
                 else if (op == 1)
@@ -399,6 +407,9 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                         resbuf[j] = max(resbuf[j], msgbuffer[j]);
                     }
                 }
+                // for (int i = 0; i < 5;i ++)
+                //     printf("%d ", *((int*)(recvbuf+i*4)));
+                
             }
             else if (datatype == 2)
             {
@@ -427,7 +438,7 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                 }
             }
         }
-        AMessage_destroy(buffer);
+        AMessage_destroy(msg);
     }
     else
     {
@@ -439,7 +450,7 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
     return 0;
 }
 
-int RDMA_Allreduce(const void *sendbuf, void *recvbuf,
+int RDMA_Allreduce(void *sendbuf, void *recvbuf,
                    int count, int datatype, int op, int rdma_group)
 {
     int local_rank = RDMA_Rank();
