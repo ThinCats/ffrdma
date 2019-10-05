@@ -1,5 +1,6 @@
 #include "process.hpp"
 #include "rdma_socket.h"
+#include "utils/log.hpp"
 
 // TODO: More elegant way
 Socket *const ffrdma::RdmaProcess::reconnect(int toRank) {
@@ -16,8 +17,11 @@ Socket *const ffrdma::RdmaProcess::reconnect(int toRank) {
 }
 
 ffrdma::RdmaProcess::~RdmaProcess() {
+  // !! The server socket will never close, because it can be closed by clients
+  // !! Or it will close twice
+  // !! FIX: If the client is disconnected from network
   if (m_listenSocket != nullptr) {
-    close_(m_listenSocket);
+    // close_(m_listenSocket);
   }
   for (Socket *socket : m_socketPool) {
     if (socket != nullptr) {
@@ -62,8 +66,8 @@ void ffrdma::RdmaProcess::setupAccept() {
     // accept all from client, block
     Socket *newSocket = acceptFromClient(rank);
     // should equal to this rank
-    assert(newSocket->node_id == rank);
-    m_socketPool[rank] = newSocket;
+    assert(rankType(newSocket->node_id) == Client);
+    m_socketPool[newSocket->node_id] = newSocket;
   }
   m_state = ACCEPT;
 }
@@ -73,7 +77,9 @@ Socket *ffrdma::RdmaProcess::reconnectAsServer(int fromRank) {
   auto listen = acceptFromClient(fromRank);
   if (listen->node_id != fromRank) {
     throw std::invalid_argument(
-        "ReconnectAsServer: nodeId and excepted Rank not matched");
+        log::toString("ReconnectAsServer: In knodeId and excepted Rank not "
+                      "matched:",
+                      "nodeId", listen->node_id, "expect rank", fromRank));
   }
   // update socket pool
   close_(m_socketPool[fromRank]);
@@ -83,10 +89,6 @@ Socket *ffrdma::RdmaProcess::reconnectAsServer(int fromRank) {
 
 Socket *ffrdma::RdmaProcess::reconnectAsClient(int toRank) {
   Socket *socket = connetToServer(toRank);
-  if (socket->node_id != toRank) {
-    throw std::invalid_argument(
-        "ReconnectAsClient: nodeId and excepted Rank not matched");
-  }
   // update socket pool
   close_(m_socketPool[toRank]);
   m_socketPool[toRank] = socket;

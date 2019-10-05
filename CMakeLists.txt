@@ -19,7 +19,6 @@ file(GLOB_RECURSE FMPI_HEADER_LIST
      RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      "include/*.hpp" "include/**/*.hpp")
 
-message(${FMPI_SRC_LIST})
 add_subdirectory(rsocket)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -27,9 +26,9 @@ add_library(fmpi ${FMPI_SRC_LIST} ${FMPI_HEADER_LIST})
 
 target_link_libraries(fmpi rsocket)
 
-if(BUILD_TESTS)
+if(BUILD_TEST)
   add_subdirectory(test)
-endif(BUILD_TESTS)
+endif(BUILD_TEST)
 
 source_group(TREE
              "${CMAKE_CURRENT_SOURCE_DIR}/include"

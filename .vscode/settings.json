@@ -1,3 +1,15 @@
 {
-  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
+  "files.associations": {
+    "*.in": "cmake",
+    "*.def": "singularity",
+    "*.yxx": "yacc",
+    "*.ll": "lex",
+    "*.s": "asm",
+    "*.lc": "c",
+    "*.schema": "jsonc",
+    "*.lib": "masm",
+    "*.goe": "go",
+    "type_traits": "cpp"
+  },
+  "C_Cpp.intelliSenseEngineFallback": "Disabled"
 }
