@@ -229,7 +229,7 @@ int RDMA_Scatter(const void *sendbuf, int sendcount, void *recvbuf,
                 msg = AMessage_create(
                     (void *)((unsigned char *)sendbuf + sendcount * i), sendcount, 0);
                 res = send_(RDMA_Socket(i), msg);
-                if(res != 0){AMessage_destroy(msg);return res};
+                if(res != 0){AMessage_destroy(msg);return res;}
                 AMessage_destroy(msg);
             }
         }
