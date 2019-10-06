@@ -8,8 +8,6 @@
 
 using namespace std;
 
-int RDMA_Alltoall()
-
 int RDMA_Bcast(void *buf, int count_in_byte, int type ,int root)
 {
     int local_rank = RDMA_Rank();
