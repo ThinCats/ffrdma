@@ -34,7 +34,7 @@ func writerGenerator(outdir string) func(int) *utils.EWriter {
 func cmdString(program string, pi types.ProcessInfo, hostMap types.HostMapPorts) string {
 	var str string
 	str += fmt.Sprintf("# Rank %d\n", pi.Rank)
-	str += fmt.Sprintf("%s --r_myIp %s --r_myPort %d --r_hostmap %s\n", program, pi.Host, pi.Port, hostMap.String())
+	str += fmt.Sprintf("%s --r_myip %s --r_myport %d --r_hostmap %s\n", program, pi.Host, pi.Port, hostMap.String())
 	return str
 }
 
@@ -79,7 +79,7 @@ type generateT struct {
 	cli.Helper
 	HostConfig hostConfigDecoder `cli:"*H,Host" usage:"Specify the Host, like node1:2,node2:4"`
 	Program    string            `cli:"*p,program" usage:"the program to launch"`
-	OutDir     string            `cli:"o,out-dir" dft:"\"\"" usage:"the output dir for generated files (rank1.sh rank0.sh). If not set, will output to stdout"`
+	OutDir     string            `cli:"o,out-dir" dft:"" usage:"the output dir for generated files (rank1.sh rank0.sh). If not set, will output to stdout"`
 }
 
 // Generate is a sub command
