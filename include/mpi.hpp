@@ -1,5 +1,6 @@
 #ifndef MPI_HPP
 #define MPI_HPP
+#include "malloc.h"
 #include "fmpi.hpp"
     int RDMA_Send(void *buf, int count, int dest,int rdma_group);
     int RDMA_Recv(void *buf, int count, int source, int rdma_group);
@@ -13,6 +14,10 @@
     int RDMA_ExchangeAll(void *sendbuf, int sendcount, void *recvbuf, int recvcount, int rdma_group);
     int RDMA_GetAll(void *sendbuf, int sendcount, void *recvbuf, int recvcount, int root, int rdma_group);
     int RDMA_Scatter(void *sendbuf, int sendcount, void *recvbuf, int recvcount, int root, int rdma_group);
+<<<<<<< HEAD
     int RDMA_Barrier();
     int TestIrecv();
 #endif
+=======
+#endif
+>>>>>>> 16448cf8520e1d48e05d9851f042b558b33c442d
