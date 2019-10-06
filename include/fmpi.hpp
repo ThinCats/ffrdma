@@ -7,6 +7,7 @@ int RDMA_Init(int argc, char **argv);
 int RDMA_Finalize();
 int RDMA_Rank();
 int RDMA_Size();
+double RDMA_Wtime();
 Socket *const RDMA_Socket(int toRank);
 Socket *const RDMA_Reconnect(int toRank);
 

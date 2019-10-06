@@ -1,8 +1,9 @@
 #include "fmpi.hpp"
 #include "process.hpp"
+#include "utils/arg_parser.hpp"
 #include "utils/decoder.hpp"
 #include "utils/rank_alg.hpp"
-#include "utils/arg_parser.hpp"
+#include <chrono>
 
 thlib::ArgObj parseArgs(int argc, char **argv) {
   thlib::ArgParser argParser("Rdma Run", "r_help");
@@ -27,9 +28,8 @@ int RDMA_Init(int argc, char **argv) {
   auto procInfoArr = ffrdma::RankAlg::calRank(hostmap);
   int myRank = ffrdma::RankAlg::getRank(procInfoArr, myIp, myPort);
 
-  ffrdma::RdmaProcess::Init(ffrdma::RdmaProcessInfo(myRank, myIp, myPort), 
-    procInfoArr
-  );
+  ffrdma::RdmaProcess::Init(ffrdma::RdmaProcessInfo(myRank, myIp, myPort),
+                            procInfoArr);
 
   // test
   ffrdma::RdmaProcess::Instance();
@@ -41,12 +41,16 @@ int RDMA_Finalize() {
   return 0;
 }
 
-int RDMA_Rank() {
-  return ffrdma::RdmaProcess::Instance().myRank();
-}
+int RDMA_Rank() { return ffrdma::RdmaProcess::Instance().myRank(); }
 
-int RDMA_Size() {
-  return ffrdma::RdmaProcess::Instance().worldSize();
+int RDMA_Size() { return ffrdma::RdmaProcess::Instance().worldSize(); }
+
+double RDMA_Wtime() {
+  static auto firstTime = std::chrono::high_resolution_clock::now();
+  auto now = std::chrono::high_resolution_clock::now();
+  return std::chrono::duration_cast<std::chrono::duration<double>>(now -
+                                                                   firstTime)
+      .count();
 }
 
 Socket *const RDMA_Socket(int toRank) {
