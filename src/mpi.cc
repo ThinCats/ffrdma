@@ -8,6 +8,8 @@
 
 using namespace std;
 
+int RDMA_Alltoall()
+
 int RDMA_Bcast(void *buf, int count_in_byte, int type ,int root)
 {
     int local_rank = RDMA_Rank();
@@ -218,6 +220,57 @@ int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
             if(res != 0) return res;
         }
     }
+
+    return 0;
+}
+
+int RDMA_Alltoall(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
+                         int recvcount, int recvtype)
+{
+    int local_rank = RDMA_Rank();
+    int whole_ranks = RDMA_Size();
+    int res =-1;
+
+    if(sendbuf == NULL || recvbuf == NULL) return 1;
+    if(sendcount <= 0 || recvcount <= 0) return 2;
+
+    sendcount*=type_static[sendtype];
+    recvcount*=type_static[recvtype];
+
+    int first_send_rank = RDMA_GetOffsetRank(1, 1);
+    auto send_msg = AMessage_create((void *)((unsigned char *)sendbuf + first_send_rank * sendcount), sendcount, 0);
+    res = send_(RDMA_Socket(first_send_rank), send_msg);
+    if(res != 0) {AMessage_destroy(send_msg);return res;}
+    AMessage_destroy(send_msg);
+
+    memcpy((unsigned char *)recvbuf + local_rank * recvcount, (unsigned char *)sendbuf + local_rank * sendcount, sendcount);
+    for (int i = 2; i < whole_ranks; i++)
+    {
+        int send_rank = RDMA_GetOffsetRank(i, 1);
+        int recv_rank = RDMA_GetOffsetRank(i - 1, 0);
+        auto send_msg = AMessage_create((void *)((unsigned char *)sendbuf + send_rank * sendcount), sendcount, 0);
+
+        res = send_(RDMA_Socket(send_rank), send_msg);
+        if(res != 0) {AMessage_destroy(send_msg);return res;}
+        AMessage_destroy(send_msg);
+        auto recv_msg = recv_(RDMA_Socket(recv_rank));
+        if(recv_msg == NULL) {
+            AMessage_destroy(send_msg);
+            return 4;
+        }
+        memcpy((unsigned char *)recvbuf + recv_rank * recvcount, recv_msg->buffer,
+               sendcount);
+        AMessage_destroy(recv_msg);
+    }
+
+    int last_recv_rank = RDMA_GetOffsetRank(whole_ranks - 1, 0);
+    auto recv_msg = recv_(RDMA_Socket(last_recv_rank));
+    if(recv_msg == NULL){
+        AMessage_destroy(recv_msg);
+        return 4;
+    }
+    memcpy((unsigned char *)recvbuf + last_recv_rank * recvcount, recv_msg->buffer, sendcount);
+    AMessage_destroy(recv_msg);
 
     return 0;
 }
