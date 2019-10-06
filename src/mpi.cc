@@ -110,7 +110,7 @@ int RDMA_Allgather_exp(void *sendbuf, int sendcount, int sendtype, void *recvbuf
             AMessage_destroy(send_msg);
             return 4;
         }
-        memcpy((unsigned char *)recvbuf + recv_rank * recvcount, sendbuf,
+        memcpy((unsigned char *)recvbuf + recv_rank * recvcount, recv_msg->buffer,
                sendcount);
         AMessage_destroy(recv_msg);
     }
@@ -119,9 +119,72 @@ int RDMA_Allgather_exp(void *sendbuf, int sendcount, int sendtype, void *recvbuf
     int last_recv_rank = RDMA_GetOffsetRank(whole_ranks - 1, 0);
     auto recv_msg = recv_(RDMA_Socket(last_recv_rank));
     if(recv_msg == NULL){
+        AMessage_destroy(recv_msg);
         return 4;
     }
     memcpy((unsigned char *)recvbuf + last_recv_rank * recvcount, recv_msg->buffer, sendcount);
+    AMessage_destroy(recv_msg);
+
+    return 0;
+}
+
+int RDMA_Allgatherv_exp(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
+                         int *recvcount, int *displs, int recvtype)
+{
+    int local_rank = RDMA_Rank();
+    int whole_ranks = RDMA_Size();
+    int res =-1;
+
+    if(sendbuf == NULL || recvbuf == NULL) return 1;
+    if(sendcount <= 0 || recvcount <= 0) return 2;
+
+    sendcount*=type_static[sendtype];
+    for(int i=0;i<whole_ranks;i++){
+        recvcount[i]*=type_static[recvtype];
+        displs[i]*=type_static[recvtype];
+    }
+
+    auto send_msg = AMessage_create((void *)sendbuf, sendcount, 0);
+
+    int first_send_rank = RDMA_GetOffsetRank(1, 1);
+    res = send_(RDMA_Socket(first_send_rank), send_msg);
+    if(res != 0) {AMessage_destroy(send_msg);return res;}
+
+    memcpy((unsigned char *)recvbuf + displs[local_rank], sendbuf, sendcount);
+    for (int i = 2; i < whole_ranks; i++)
+    {
+        int send_rank = RDMA_GetOffsetRank(i, 1);
+        int recv_rank = RDMA_GetOffsetRank(i - 1, 0);
+
+        res = send_(RDMA_Socket(send_rank), send_msg);
+        if(res != 0) {AMessage_destroy(send_msg);return res;}
+
+        auto recv_msg = recv_(RDMA_Socket(recv_rank));
+        if(recv_msg == NULL) {
+            AMessage_destroy(send_msg);
+            return 4;
+        }
+        if(recv_msg.length != recvcount[i]){
+            AMessage_destroy(send_msg);
+            return 5;
+        }
+        memcpy((unsigned char *)recvbuf + displs[i], recv_msg.buffer,
+               recvcount[i]);
+        AMessage_destroy(recv_msg);
+    }
+    AMessage_destroy(send_msg);
+
+    int last_recv_rank = RDMA_GetOffsetRank(whole_ranks - 1, 0);
+    auto recv_msg = recv_(RDMA_Socket(last_recv_rank));
+    if(recv_msg == NULL){
+        AMessage_destroy(send_msg);
+        return 4;
+    }
+    if(recv_msg.length != recvcount[last_recv_rank]) {
+        AMessage_destroy(send_msg);
+        return 5;
+    }
+    memcpy((unsigned char *)recvbuf + displs[last_recv_rank], recv_msg->buffer, recvcount[last_recv_rank]);
     AMessage_destroy(recv_msg);
 
     return 0;
