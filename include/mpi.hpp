@@ -28,4 +28,6 @@ int RDMA_Allgatherv_exp(void *sendbuf, int sendcount, int sendtype, void *recvbu
 int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf, int recvcount, int recvtype);
 int RDMA_Gather(void *sendbuf, int sendcount, int sendtype, void *recvbuf, int recvcount, int recvtype, int root);
 int RDMA_Scatter(void *sendbuf, int sendcount, int sendtype, void *recvbuf, int recvcount, int recvtype, int root);
+int RDMA_Barrier();
+int TestIrecv();
 #endif
