@@ -217,10 +217,8 @@ int connect_(Socket **socket_, const char *address, const char *port, int node_i
 
     while (rdma_get_cm_event(ec, &g_event) == 0) {
 
-        printf("g_event: %d\n", g_event->event);
         memcpy(&event, g_event, sizeof(event));
         rdma_ack_cm_event(g_event);
-        printf("event: %d\n", event.event);
         if (event.event == RDMA_CM_EVENT_ADDR_ERROR) {
             printf("RDMA_CM_EVENT_ADDR_ERROR");
             exit(0);

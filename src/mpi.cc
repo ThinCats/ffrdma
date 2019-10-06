@@ -161,15 +161,14 @@ int RDMA_Allgatherv_exp(void *sendbuf, int sendcount, int sendtype, void *recvbu
 
         auto recv_msg = recv_(RDMA_Socket(recv_rank));
         if(recv_msg == NULL) {
-            AMessage_destroy(send_msg);
             return 4;
         }
-        if(recv_msg.length != recvcount[i]){
+        if(recv_msg->length != recvcount[recv_rank]){
             AMessage_destroy(send_msg);
             return 5;
         }
-        memcpy((unsigned char *)recvbuf + displs[i], recv_msg.buffer,
-               recvcount[i]);
+        memcpy((unsigned char *)recvbuf + displs[recv_rank], recv_msg->buffer,
+               recv_msg->length);
         AMessage_destroy(recv_msg);
     }
     AMessage_destroy(send_msg);
@@ -180,7 +179,7 @@ int RDMA_Allgatherv_exp(void *sendbuf, int sendcount, int sendtype, void *recvbu
         AMessage_destroy(send_msg);
         return 4;
     }
-    if(recv_msg.length != recvcount[last_recv_rank]) {
+    if(recv_msg->length != recvcount[last_recv_rank]) {
         AMessage_destroy(send_msg);
         return 5;
     }
@@ -481,7 +480,7 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                 }
                 // for (int i = 0; i < 5;i ++)
                 //     printf("%d ", *((int*)(recvbuf+i*4)));
-                
+
             }
             else if (datatype == 2)
             {
