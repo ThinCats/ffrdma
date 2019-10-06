@@ -3,6 +3,7 @@
 #include "amessage.h"
 #include <malloc.h>
 #include "rdma_socket.h"
+#include <thread>
 
 int main(int argc, char** argv)
 {
@@ -61,6 +62,10 @@ int main(int argc, char** argv)
             printf("%.6lf ", recvbuf_double[i]);
         }
         printf("\n");
+        printf("begin barrier\n");
+        RDMA_Barrier();
+        printf("end barrier\n");
+        TestIrecv();
         free(recvbuf);
         free(recvbuf_double);
         free(num_double);
@@ -101,6 +106,9 @@ int main(int argc, char** argv)
             num_double[i] =  5 - i;
         RDMA_Reduce(num_double,recvbuf_double, 40, 0, 2, 0, 0);
         printf("\n");
+        std::this_thread::sleep_for (std::chrono::seconds(5));
+        RDMA_Barrier();
+        TestIrecv();
         free(recvbuf);
         free(recvbuf_double);
         free(num_double);

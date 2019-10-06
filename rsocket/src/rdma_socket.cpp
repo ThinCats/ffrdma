@@ -369,12 +369,13 @@ AMessage *irecv_(Socket *socket_) {            // 用户提供指针地址，函
     void *wc_save;
     struct ibv_cq *cq;
     AMessage *recv_msg;
-
+    // printf("begin irecv\n");
     if(pthread_mutex_trylock(&socket_->close_lock)) {
+        // printf("in 374\n");
         return NULL;
     }
+    // printf("in 377\n");
     pthread_mutex_unlock(&socket_->close_lock);
-
     while(ibv_poll_cq(socket_->cq, 1, &wc) == 1){
         if(wc.opcode == IBV_WC_SEND || wc.opcode == IBV_WC_RDMA_READ){
             continue;
@@ -389,8 +390,9 @@ AMessage *irecv_(Socket *socket_) {            // 用户提供指针地址，函
         socket_->close_flag = 1;
         return NULL;
     }
-
+    // printf("in 392\n");
     if((recv_msg = (AMessage *)queue_pop(socket_->recv_queue)) != NULL) {
+        // printf("true\n");
         return recv_msg;
     } else if(pthread_mutex_trylock(&socket_->close_lock)) {    // 往下 *recv_buffer 都为 NULL
         return NULL;

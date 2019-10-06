@@ -461,3 +461,49 @@ int RDMA_Allreduce(void *sendbuf, void *recvbuf,
     }
     return 0;
 }
+
+int RDMA_Barrier(){
+    int local_rank = RDMA_Rank();
+    int whole_rank = RDMA_Size(); 
+    // printf("whole_rank = %d \n",whole_rank);
+    if(local_rank == 0){
+        int id = 1;
+        for(int i = 1;i<whole_rank;i ++){
+            auto socket = RDMA_Socket(i); 
+            auto *buffer = recv_(socket);
+            free(buffer);
+        }
+        char finish[1] = {'0'};
+        RDMA_MakeAll(finish,1,0,0);
+        return 0;
+    }else{
+        auto socket = RDMA_Socket(0);
+        char finish[1] = {'0'};
+        auto msg = AMessage_create((void *)(finish), 1, 0);
+        int flag = send_(socket,msg);
+        // printf("flag = %d\n",flag);
+        free(msg);
+        recv_(socket);
+        return 0;
+    }
+}
+
+int TestIrecv(){
+    printf("begin recv\n");
+    int local_rank = RDMA_Rank();
+    if(local_rank == 0){
+        while(1){
+            auto socket = RDMA_Socket(1); 
+            auto *buffer = irecv_(socket);
+            if(buffer!=NULL){
+                printf("recv!\n");
+                break;
+            }
+        }
+    }else{
+        auto socket = RDMA_Socket(0);
+        char finish[1] = {'0'};
+        auto msg = AMessage_create((void *)(finish), 1, 0);
+        int flag = send_(socket,msg);
+    }
+}
