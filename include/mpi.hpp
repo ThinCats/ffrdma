@@ -1,5 +1,6 @@
 #ifndef MPI_HPP
 #define MPI_HPP
+#include "malloc.h"
 #include "fmpi.hpp"
     int RDMA_Send(void *buf, int count, int dest,int rdma_group);
     int RDMA_Recv(void *buf, int count, int source, int rdma_group);
