@@ -11,10 +11,10 @@ int main(int argc, char** argv)
 
     double msg_buf[]={1.1,2.2,3.3,4.4};
 
-    msg_buf[local_rank]=234.567;
+    msg_buf[local_rank]=234.567*local_rank;
 
     printf("local_rank:%d   msg:%f %f %f %f\n",local_rank,msg_buf[0],msg_buf[1],msg_buf[2],msg_buf[3]);
-    RDMA_ExchangeAll_exp((void *)&msg_buf[local_rank],8,(void *)msg_buf,8,0);
+    RDMA_Allgather_exp((void *)&msg_buf[local_rank],1,R_TYPE_DOUBLE,(void *)msg_buf,1,R_TYPE_DOUBLE);
     printf("local_rank:%d   msg:%f %f %f %f\n",local_rank,msg_buf[0],msg_buf[1],msg_buf[2],msg_buf[3]);
 
     RDMA_Finalize();
