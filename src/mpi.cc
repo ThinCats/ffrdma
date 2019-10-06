@@ -547,7 +547,7 @@ int RDMA_Barrier(){
             AMessage_destroy(buffer);
         }
         char finish[1] = {'0'};
-        RDMA_Bcast(finish,1,0,0);
+        RDMA_Bcast(finish, 1, R_TYPE_BYTE, 0);
         return 0;
     }else{
         auto socket = RDMA_Socket(0);
