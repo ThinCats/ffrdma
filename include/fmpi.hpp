@@ -18,4 +18,6 @@ Socket *const RDMA_Reconnect(int toRank, RDMA_Comm comm = 0);
 int RDMA_Comm_split(RDMA_Comm comm, int color, int key, RDMA_Comm *newcomm);
 // !! Warning, not implemented
 int RDMA_Comm_free(RDMA_Comm *comm);
+// !! Warning, not implemented
+int RDMA_Abort(RDMA_Comm comm, int errorcode);
 #endif // FMPI_HPP
