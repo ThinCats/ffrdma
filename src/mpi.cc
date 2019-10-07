@@ -399,7 +399,7 @@ int RDMA_Send(void *buf, int count,int type, int dest)
 int RDMA_Recv(void *buf, int count, int type, int source)
 {
     int local_rank = RDMA_Rank();
-    int res = 0;
+    int res = -1;
 
     if (buf == NULL) return 1;
     if (count < 0) return 2;
@@ -413,10 +413,11 @@ int RDMA_Recv(void *buf, int count, int type, int source)
     if (msg->length == count && msg->node_id == source)
     {
         memcpy(buf, msg->buffer, count);
+        res = 0;
     }
     else
     {
-        buf = nullptr;
+        res = 6;
     }
 
     AMessage_destroy(msg);
@@ -426,7 +427,7 @@ int RDMA_Recv(void *buf, int count, int type, int source)
 int RDMA_Irecv(void *buf, int count, int type, int source)
 {
     int local_rank = RDMA_Rank();
-    int rc = 0;
+    int rc = -1;
 
     if (buf == NULL) return 1;
     if (count < 0) return 2;
@@ -444,10 +445,11 @@ int RDMA_Irecv(void *buf, int count, int type, int source)
     if (msg->length == count && msg->node_id == source)
     {
         memcpy(buf, msg->buffer, count);
+        rc = 0;
     }
     else
     {
-        buf = nullptr;
+        rc = 6;
     }
     AMessage_destroy(msg);
     return rc;
