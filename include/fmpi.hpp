@@ -10,11 +10,11 @@ typedef Socket_ Socket;
 typedef int RDMA_Comm;
 int RDMA_Init(int *argc, char ***argv);
 int RDMA_Finalize();
-int RDMA_Rank(RDMA_Comm comm);
-int RDMA_Size(RDMA_Comm comm);
+int RDMA_Rank(RDMA_Comm comm = 0);
+int RDMA_Size(RDMA_Comm comm = 0);
 double RDMA_Wtime();
-Socket *const RDMA_Socket(int toRank, RDMA_Comm comm);
-Socket *const RDMA_Reconnect(int toRank, RDMA_Comm comm);
+Socket *const RDMA_Socket(int toRank, RDMA_Comm comm = 0);
+Socket *const RDMA_Reconnect(int toRank, RDMA_Comm comm = 0);
 int RDMA_Comm_split(RDMA_Comm comm, int color, int key, RDMA_Comm *newcomm);
 // !! Warning, not implemented
 int RDMA_Comm_free(RDMA_Comm *comm);

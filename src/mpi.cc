@@ -560,23 +560,3 @@ int RDMA_Barrier(RDMA_Comm comm){
         return 0;
     }
 }
-
-int TestIrecv(RDMA_Comm comm){
-    printf("begin recv\n");
-    int local_rank = RDMA_Rank(comm);
-    if(local_rank == 0){
-        while(1){
-            auto socket = RDMA_Socket(1, comm); 
-            auto *buffer = irecv_(socket);
-            if(buffer!=NULL){
-                printf("recv!\n");
-                break;
-            }
-        }
-    }else{
-        auto socket = RDMA_Socket(0, comm);
-        char finish[1] = {'0'};
-        auto msg = AMessage_create((void *)(finish), 1, 0);
-        int flag = send_(socket,msg);
-    }
-}
