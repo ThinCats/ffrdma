@@ -1,78 +1,39 @@
 package cmd
 
 import (
-	"ffrun/pkg/algorithm"
+	"ffrun/pkg/generator"
 	"ffrun/pkg/types"
-	"ffrun/pkg/utils"
 	"fmt"
-	"os"
-	"path"
+	"strings"
 
 	"github.com/mkideal/cli"
 )
 
-// writerGenerator will generate diffrent
-// writer according to arguments
-func writerGenerator(outdir string) func(int) *utils.EWriter {
-	// no outdir
-	if outdir == "" {
-		return func(int) *utils.EWriter {
-			return utils.NewEWriter(os.Stdout)
-		}
+func generateCmd(hostMapNp types.HostMapNumproc, program string, args string, outdir string) {
+	cfg := generator.CmdConfig{
+		Program:   program,
+		Args:      args,
+		HostMapNp: hostMapNp,
 	}
-	outdir = utils.CreateDir(outdir, "")
-	return func(rank int) *utils.EWriter {
-		w, err := os.Create(path.Join(outdir, fmt.Sprintf("Rank%d.sh", rank)))
+
+	cmdStringGen := generator.CmdStringGenerator(cfg)
+	writerGen := generator.DirFileWriterGenerator(outdir)
+	var (
+		str string
+		i   int
+		end bool = false
+	)
+
+	for !end {
+		str, i, end = cmdStringGen()
+		writer := writerGen(fmt.Sprintf("Rank%d.sh", i))
+		_, err := writer.WriteString(str)
 		if err != nil {
 			panic(err)
 		}
-		return utils.NewEWriter(w)
-	}
-}
-
-// cmdString generate one command string
-func cmdString(program string, pi types.ProcessInfo, hostMap types.HostMapPorts) string {
-	var str string
-	str += fmt.Sprintf("# Rank %d\n", pi.Rank)
-	str += fmt.Sprintf("%s --r_myip %s --r_myport %d --r_hostmap %s\n", program, pi.Host, pi.Port, hostMap.String())
-	return str
-}
-
-func generateCmd(hostMapNp types.HostMapNumproc, program string, outdir string) {
-	writerGen := writerGenerator(outdir)
-	// construct port map
-	var hostMapPorts = make(types.HostMapPorts)
-	for host, np := range hostMapNp {
-
-		hostMapPorts[host] = algorithm.PortSelect(host, np, 10000)
-	}
-	piSlice := algorithm.CalculateRank(hostMapPorts)
-
-	// start to generate
-	for _, pi := range piSlice {
-		writer := writerGen(pi.Rank)
-		str := cmdString(program, pi, hostMapPorts) + "\n"
-		_, err := writer.WriteString(str)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
 		writer.Flush()
 	}
-}
 
-type hostConfigDecoder struct {
-	hosts types.HostMapNumproc
-}
-
-// 10.10.0.110:5,10.10.0.112:4
-func (d *hostConfigDecoder) Decode(s string) error {
-	var err error
-	d.hosts, err = d.hosts.FromString(s)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 type generateT struct {
@@ -87,11 +48,13 @@ var Generate = &cli.Command{
 	Name: "generate",
 	Desc: "generate boot script\n" +
 		"Example:\n" +
-		"    ffrun generate -H node110:3,node112:4 -p ./a.out -o size7_node2",
+		"    ffrun generate -H node110:3,node112:4 -p ./a.out -o size7_node2 -- good hello world" +
+		"After --, the remaining args will be treated as args for generated program",
 	Argv: func() interface{} { return new(generateT) },
 	Fn: func(ctx *cli.Context) error {
 		argv := ctx.Argv().(*generateT)
-		generateCmd(argv.HostConfig.hosts, argv.Program, argv.OutDir)
+		generateCmd(argv.HostConfig.hosts, argv.Program, strings.Join(ctx.Args(), " "), argv.OutDir)
+		ctx.String(strings.Join(ctx.Args(), " "))
 		return nil
 	},
 }
