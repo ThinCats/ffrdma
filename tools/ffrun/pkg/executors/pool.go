@@ -102,7 +102,7 @@ func (p *Pool) Stop() {
 	case p.notifyCh <- struct{}{}:
 	default:
 	}
-	p.Logger.Debugf("Wait %d ms for all process\n", p.minWaitTime.Milliseconds())
+	// p.Logger.Debugf("Wait %d ms for all process\n", p.minWaitTime.Milliseconds())
 	time.Sleep(p.minWaitTime)
 	p.cancelFn()
 	p.wg.Wait()
