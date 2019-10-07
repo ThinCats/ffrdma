@@ -732,7 +732,7 @@ int RDMA_Allreduce_exp(void *sendbuf, void *recvbuf,
         else if (datatype == 1)
         {
             int *resbuf = (int *)recvbuf;
-            int *msgbuffer = (int *)msg->buffer;
+            int *msgbuffer = (int *)recv_msg->buffer;
             if (op == 0)
             {
                 for (int j = 0; j < count / 4; j++)
@@ -762,7 +762,7 @@ int RDMA_Allreduce_exp(void *sendbuf, void *recvbuf,
         else if (datatype == 2)
         {
             long long *resbuf = (long long *)recvbuf;
-            long long *msgbuffer = (long long *)msg->buffer;
+            long long *msgbuffer = (long long *)recv_msg->buffer;
             if (op == 0)
             {
                 for (int j = 0; j < count / 8; j++)
@@ -797,7 +797,7 @@ int RDMA_Allreduce_exp(void *sendbuf, void *recvbuf,
     }
     if(recv_msg->length != count ){
         AMessage_destroy(recv_msg);
-        return 
+        return 5;
     }
     if (datatype == 0)
     {
@@ -830,7 +830,7 @@ int RDMA_Allreduce_exp(void *sendbuf, void *recvbuf,
     else if (datatype == 1)
     {
         int *resbuf = (int *)recvbuf;
-        int *msgbuffer = (int *)msg->buffer;
+        int *msgbuffer = (int *)recv_msg->buffer;
         if (op == 0)
         {
             for (int j = 0; j < count / 4; j++)
@@ -860,7 +860,7 @@ int RDMA_Allreduce_exp(void *sendbuf, void *recvbuf,
     else if (datatype == 2)
     {
         long long *resbuf = (long long *)recvbuf;
-        long long *msgbuffer = (long long *)msg->buffer;
+        long long *msgbuffer = (long long *)recv_msg->buffer;
         if (op == 0)
         {
             for (int j = 0; j < count / 8; j++)
