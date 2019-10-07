@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv) {
   RDMA_Comm rootComm = 0;
-  RDMA_Init(argc, argv);
+  RDMA_Init(&argc, &argv);
   int local_rank = RDMA_Rank(rootComm);
   printf("local_rank = %d\n", local_rank);
   int other_rank = local_rank % 2 ? local_rank - 1 : local_rank + 1;

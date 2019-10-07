@@ -172,6 +172,15 @@ public:
   ArgObj() {}
   ~ArgObj() {}
 
+  /**
+   * @brief Get the Last Parsing Index object
+   *  the lastParsingIndex is the index parser stops
+   *  argv[lastParsingIndex:] is not parsed
+   * @return int
+   */
+  int getLastParsingIndex() const { return m_last_index; }
+  void setLastParsingIndex(int index) { m_last_index = index; }
+
   const ArgData &getArgData(const std::string &arg) const {
     try {
       return arg_items.at(arg);
@@ -203,6 +212,7 @@ public:
 
 private:
   std::map<std::string, ArgData> arg_items;
+  int m_last_index = 0;
 };
 
 class ArgParser;
@@ -297,15 +307,22 @@ public:
     // Save the previous arg, if not option
     size_t prev_arg = std::string::npos;
     char *arg;
+    int last_index;
     // "--lexer --option"
+    // if encounter --, stop parsing (return last_index)
     try {
-      for (int i = 1; i < argc; ++i) {
-        arg = args[i];
+      for (last_index = 1; last_index < argc; ++last_index) {
+        arg = args[last_index];
         if (*arg == '-') {
           arg++;
           // long argument
           if (*arg == '-') {
             arg++;
+            // just --, end parsing
+            if (*(arg) == '\0' || isspace(*(arg))) {
+              last_index++;
+              break;
+            }
             // --lexer
             prev_arg = argsMap.at(std::string(arg));
             if (argumentContainer[prev_arg].getType() == ArgType::T_BOOL) {
@@ -333,9 +350,9 @@ public:
           prev_arg = std::string::npos;
         }
       }
-    } catch (std::out_of_range & t) {
+    } catch (std::out_of_range &t) {
       exitProgram("Unknown Parsed Arguments " + std::string(t.what()));
-    } catch (std::invalid_argument & t) {
+    } catch (std::invalid_argument &t) {
       exitProgram("Unknown Parsed Arguments t" + std::string(t.what()));
     }
 
@@ -345,6 +362,7 @@ public:
     }
 
     ArgObj argObj;
+    argObj.setLastParsingIndex(last_index);
     // Create arg obj
     for (auto &arg : argumentContainer) {
       if (!arg.isDefined()) {

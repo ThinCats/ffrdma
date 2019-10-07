@@ -6,6 +6,7 @@
 #include "utils/decoder.hpp"
 #include "utils/rank_alg.hpp"
 #include <chrono>
+#include <stdexcept>
 #include <string.h>
 
 thlib::ArgObj parseArgs(int argc, char **argv) {
@@ -19,17 +20,33 @@ thlib::ArgObj parseArgs(int argc, char **argv) {
   return argParser.parse_args(argc, argv);
 }
 
-int RDMA_Init(int argc, char **argv) {
+int RDMA_Init(int *argc, char ***argv) {
   // parse arguments
-  auto argObj = parseArgs(argc, argv);
+  auto argObj = parseArgs(*argc, *argv);
   auto myIp = argObj.getValStr("r_myip");
   auto myPort = argObj.getValInt("r_myport");
   auto hostmapStr = argObj.getValStr("r_hostmap");
+  // filter used args
+  *argc -= argObj.getLastParsingIndex();
+  *argv += argObj.getLastParsingIndex();
+  printf("Argc: %d\n", *argc);
+  printf("Argv: ");
+  for (int i = 0; i < *argc; i++) {
+    printf("%s ", (*argv)[i]);
+  }
+  printf("\n");
 
+  int myRank;
+  ffrdma::RankRdmaProcessInfoArray procInfoArr;
   // decode
-  auto hostmap = ffrdma::Decoder::decode(hostmapStr);
-  auto procInfoArr = ffrdma::RankAlg::calRank(hostmap);
-  int myRank = ffrdma::RankAlg::getRank(procInfoArr, myIp, myPort);
+  try {
+    auto hostmap = ffrdma::Decoder::decode(hostmapStr);
+    procInfoArr = ffrdma::RankAlg::calRank(hostmap);
+    myRank = ffrdma::RankAlg::getRank(procInfoArr, myIp, myPort);
+  } catch (std::invalid_argument &t) {
+    std::cout << "Ip Port Format Error: " << t.what() << std::endl;
+    std::exit(-1);
+  }
 
   ffrdma::RdmaProcess::Init(ffrdma::RdmaProcessInfo(myRank, myIp, myPort),
                             procInfoArr);

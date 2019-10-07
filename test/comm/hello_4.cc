@@ -8,7 +8,7 @@ void printComm(RDMA_Comm comm) {
 }
 
 int main(int argc, char **argv) {
-  RDMA_Init(argc, argv);
+  RDMA_Init(&argc, &argv);
 
   const int splitSize = 2;
 

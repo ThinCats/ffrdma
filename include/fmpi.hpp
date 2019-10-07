@@ -8,7 +8,7 @@ const static int RDMA_INTERN = 2;
 struct Socket_;
 typedef Socket_ Socket;
 typedef int RDMA_Comm;
-int RDMA_Init(int argc, char **argv);
+int RDMA_Init(int *argc, char ***argv);
 int RDMA_Finalize();
 int RDMA_Rank(RDMA_Comm comm);
 int RDMA_Size(RDMA_Comm comm);
