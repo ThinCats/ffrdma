@@ -222,6 +222,57 @@ int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
     return 0;
 }
 
+int RDMA_Alltoall(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
+                         int recvcount, int recvtype)
+{
+    int local_rank = RDMA_Rank();
+    int whole_ranks = RDMA_Size();
+    int res =-1;
+
+    if(sendbuf == NULL || recvbuf == NULL) return 1;
+    if(sendcount <= 0 || recvcount <= 0) return 2;
+
+    sendcount*=type_static[sendtype];
+    recvcount*=type_static[recvtype];
+
+    int first_send_rank = RDMA_GetOffsetRank(1, 1);
+    auto send_msg = AMessage_create((void *)((unsigned char *)sendbuf + first_send_rank * sendcount), sendcount, 0);
+    res = send_(RDMA_Socket(first_send_rank), send_msg);
+    if(res != 0) {AMessage_destroy(send_msg);return res;}
+    AMessage_destroy(send_msg);
+
+    memcpy((unsigned char *)recvbuf + local_rank * recvcount, (unsigned char *)sendbuf + local_rank * sendcount, sendcount);
+    for (int i = 2; i < whole_ranks; i++)
+    {
+        int send_rank = RDMA_GetOffsetRank(i, 1);
+        int recv_rank = RDMA_GetOffsetRank(i - 1, 0);
+        auto send_msg = AMessage_create((void *)((unsigned char *)sendbuf + send_rank * sendcount), sendcount, 0);
+
+        res = send_(RDMA_Socket(send_rank), send_msg);
+        if(res != 0) {AMessage_destroy(send_msg);return res;}
+        AMessage_destroy(send_msg);
+        auto recv_msg = recv_(RDMA_Socket(recv_rank));
+        if(recv_msg == NULL) {
+            AMessage_destroy(send_msg);
+            return 4;
+        }
+        memcpy((unsigned char *)recvbuf + recv_rank * recvcount, recv_msg->buffer,
+               sendcount);
+        AMessage_destroy(recv_msg);
+    }
+
+    int last_recv_rank = RDMA_GetOffsetRank(whole_ranks - 1, 0);
+    auto recv_msg = recv_(RDMA_Socket(last_recv_rank));
+    if(recv_msg == NULL){
+        AMessage_destroy(recv_msg);
+        return 4;
+    }
+    memcpy((unsigned char *)recvbuf + last_recv_rank * recvcount, recv_msg->buffer, sendcount);
+    AMessage_destroy(recv_msg);
+
+    return 0;
+}
+
 int RDMA_Gather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
                 int recvcount, int recvtype, int root, RDMA_Comm comm)
 {
@@ -348,7 +399,7 @@ int RDMA_Send(void *buf, int count,int type, int dest, RDMA_Comm comm)
 int RDMA_Recv(void *buf, int count, int type, int source, RDMA_Comm comm)
 {
     int local_rank = RDMA_Rank(comm);
-    int res = 0;
+    int res = -1;
 
     if (buf == NULL) return 1;
     if (count < 0) return 2;
@@ -362,10 +413,11 @@ int RDMA_Recv(void *buf, int count, int type, int source, RDMA_Comm comm)
     if (msg->length == count && msg->node_id == source)
     {
         memcpy(buf, msg->buffer, count);
+        res = 0;
     }
     else
     {
-        buf = nullptr;
+        res = 6;
     }
 
     AMessage_destroy(msg);
@@ -375,7 +427,7 @@ int RDMA_Recv(void *buf, int count, int type, int source, RDMA_Comm comm)
 int RDMA_Irecv(void *buf, int count, int type, int source, RDMA_Comm comm)
 {
     int local_rank = RDMA_Rank(comm);
-    int rc = 0;
+    int rc = -1;
 
     if (buf == NULL) return 1;
     if (count < 0) return 2;
@@ -393,10 +445,11 @@ int RDMA_Irecv(void *buf, int count, int type, int source, RDMA_Comm comm)
     if (msg->length == count && msg->node_id == source)
     {
         memcpy(buf, msg->buffer, count);
+        rc = 0;
     }
     else
     {
-        buf = nullptr;
+        rc = 6;
     }
     AMessage_destroy(msg);
     return rc;
