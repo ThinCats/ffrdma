@@ -206,7 +206,7 @@ int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
     {
         if (local_rank == i)
         {
-            res = RDMA_Bcast((void *)sendbuf, sendcount, sendtype, i, comm);
+            res = RDMA_Bcast((void *)sendbuf, sendcount, R_TYPE_BYTE, i, comm);
             if(res != 0) return res;
 
             memcpy(((unsigned char *)recvbuf) + sendcount * i, sendbuf, sendcount);
@@ -214,7 +214,7 @@ int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
         else
         {
             res = RDMA_Bcast((void *)((unsigned char *)recvbuf + recvcount * i),
-                         recvcount, recvtype, i, comm);
+                         recvcount, R_TYPE_BYTE, i, comm);
             if(res != 0) return res;
         }
     }
