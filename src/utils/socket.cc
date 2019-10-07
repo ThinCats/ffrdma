@@ -1,8 +1,8 @@
 #ifndef FFRDMA_MOCK_SOCKET
-#include "utils/socket.hpp"
-#include "rdma_socket.h"
+#  include "utils/socket.hpp"
+#  include "rdma_socket.h"
 #else
-#include "rsocket_mock/rdma_socket.h"
+#  include "rsocket_mock/rdma_socket.h"
 #endif
 
 std::string ffrdma::utils::ipPortString(const std::string &ip, int port) {
@@ -10,7 +10,8 @@ std::string ffrdma::utils::ipPortString(const std::string &ip, int port) {
 }
 
 // helper function, bind and listen
-Socket *ffrdma::utils::createServerSocket(const std::string &ip, int port, int backlog) {
+Socket *ffrdma::utils::createServerSocket(const std::string &ip, int port,
+                                          int backlog) {
   sockaddr_in sockaddr;
   if (inet_pton(AF_INET, ip.c_str(), &sockaddr) != 1) {
     throw std::invalid_argument("Failed to read net ip: " + ip);
@@ -22,10 +23,12 @@ Socket *ffrdma::utils::createServerSocket(const std::string &ip, int port, int b
 
   Socket *socket = socket_(RDMA_PS_TCP);
 
-  if (bind_(socket, &sockaddr, AF_INET)) {
+  int errCode = bind_(socket, &sockaddr, AF_INET);
+  if (errCode) {
     free(socket);
-    throw std::runtime_error("Bind to address failed: " +
-                             ipPortString(ip, port));
+    throw std::runtime_error(
+        std::string("Bind to address failed: ") + ipPortString(ip, port) +
+        std::string(" Errcode: ") + std::to_string(errCode));
   }
 
   // listen
@@ -34,8 +37,9 @@ Socket *ffrdma::utils::createServerSocket(const std::string &ip, int port, int b
   return socket;
 }
 
-std::pair<Socket *, ffrdma::utils::ConnStatus> ffrdma::utils::createConnectToServer(const std::string ip,
-                                                       int port, int nodeId) {
+std::pair<Socket *, ffrdma::utils::ConnStatus>
+ffrdma::utils::createConnectToServer(const std::string ip, int port,
+                                     int nodeId) {
   Socket *socket = socket_(RDMA_PS_TCP);
   int status =
       connect_(&socket, ip.c_str(), std::to_string(port).c_str(), nodeId);

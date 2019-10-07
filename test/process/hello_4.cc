@@ -4,12 +4,13 @@
 #include "stdio.h"
 
 int main(int argc, char **argv) {
+  RDMA_Comm rootComm = 0;
   RDMA_Init(argc, argv);
-  int local_rank = RDMA_Rank();
+  int local_rank = RDMA_Rank(rootComm);
   printf("local_rank = %d\n", local_rank);
   int other_rank = local_rank % 2 ? local_rank - 1 : local_rank + 1;
 
-  Socket *socket = RDMA_Socket(other_rank);
+  Socket *socket = RDMA_Socket(other_rank, rootComm);
   printf("socket: %x\n", socket);
 
   if (local_rank % 2 == 0) {
@@ -20,7 +21,7 @@ int main(int argc, char **argv) {
     } else {
       printf("nodeid: %d\n", amsg->node_id);
     }
-    Socket *newSocket = RDMA_Reconnect(other_rank);
+    Socket *newSocket = RDMA_Reconnect(other_rank, rootComm);
     if (send_(newSocket, amsg)) {
       printf("Error to send with new socket");
     } else {
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
       printf("%s, nodeId: %d\n", recv->buffer, recv->node_id);
       AMessage_destroy(recv);
       if (cnt++ < 1) {
-        socket = RDMA_Reconnect(other_rank);
+        socket = RDMA_Reconnect(other_rank, rootComm);
       }
     }
   }
