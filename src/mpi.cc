@@ -567,8 +567,8 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
                     }
                 }
             }
-        }
         AMessage_destroy(msg);
+        }
     }
     else
     {
