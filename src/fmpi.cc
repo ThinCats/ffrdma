@@ -54,6 +54,7 @@ int RDMA_Init(int *argc, char ***argv) {
 }
 
 int RDMA_Finalize() {
+  RDMA_Barrier(RDMA_Comm_Root);
   ffrdma::RdmaProcess::Destroy();
   return 0;
 }
@@ -139,6 +140,6 @@ int RDMA_Comm_free(RDMA_Comm *comm) {
 
 int RDMA_Abort(RDMA_Comm comm, int errorcode) {
   printf("%d aborted\n", RDMA_Rank(0));
-  RDMA_Finalize();
+  ffrdma::RdmaProcess::Destroy();
   std::exit(errorcode);
 }
