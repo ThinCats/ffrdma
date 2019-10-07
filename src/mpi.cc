@@ -410,7 +410,7 @@ int RDMA_Recv(void *buf, int count, int type, int source, RDMA_Comm comm)
     Socket *listen = RDMA_Socket(source, comm);
     AMessage *msg = (AMessage *)1;
     msg = recv_(listen);
-    if (msg->length == count && msg->node_id == source)
+    if (msg->length == count)
     {
         memcpy(buf, msg->buffer, count);
         res = 0;
@@ -445,7 +445,7 @@ int RDMA_Irecv(void *buf, int count, int type, int source, RDMA_Comm comm)
     if(msg == NULL){
         return 6;
     }
-    if (msg->length == count && msg->node_id == source)
+    if (msg->length == count)
     {
         memcpy(buf, msg->buffer, count);
         rc = 0;
