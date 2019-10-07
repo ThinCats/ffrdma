@@ -442,6 +442,9 @@ int RDMA_Irecv(void *buf, int count, int type, int source, RDMA_Comm comm)
     if(listen->close_flag == 1){
         return 1;
     }
+    if(msg == NULL){
+        return 6;
+    }
     if (msg->length == count && msg->node_id == source)
     {
         memcpy(buf, msg->buffer, count);
