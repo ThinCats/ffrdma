@@ -27,8 +27,11 @@ int RDMA_Init(int *argc, char ***argv) {
   auto myPort = argObj.getValInt("r_myport");
   auto hostmapStr = argObj.getValStr("r_hostmap");
   // filter used args
-  *argc -= argObj.getLastParsingIndex();
-  *argv += argObj.getLastParsingIndex();
+  char *programName = **argv;
+  (*argc) -= (argObj.getLastParsingIndex() - 1);
+  assert(argc > 0);
+  *argv += (argObj.getLastParsingIndex() - 1);
+  **argv = programName;
 
   int myRank;
   ffrdma::RankRdmaProcessInfoArray procInfoArr;
@@ -132,4 +135,10 @@ int RDMA_Comm_split(RDMA_Comm fromComm, int color, int key,
 int RDMA_Comm_free(RDMA_Comm *comm) {
   ffrdma::RdmaProcess::Instance().freeComm(comm);
   return RDMA_SUCCESS;
+}
+
+int RDMA_Abort(RDMA_Comm comm, int errorcode) {
+  printf("%d aborted\n", RDMA_Rank(0));
+  RDMA_Finalize();
+  std::exit(errorcode);
 }
