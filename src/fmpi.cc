@@ -29,12 +29,6 @@ int RDMA_Init(int *argc, char ***argv) {
   // filter used args
   *argc -= argObj.getLastParsingIndex();
   *argv += argObj.getLastParsingIndex();
-  printf("Argc: %d\n", *argc);
-  printf("Argv: ");
-  for (int i = 0; i < *argc; i++) {
-    printf("%s ", (*argv)[i]);
-  }
-  printf("\n");
 
   int myRank;
   ffrdma::RankRdmaProcessInfoArray procInfoArr;
@@ -97,17 +91,19 @@ int RDMA_Comm_split(RDMA_Comm fromComm, int color, int key,
   int commSize = RDMA_Size(fromComm);
 
   constexpr int sendcount = 2;
-  void *sendbuf = malloc(sendcount * sizeof(int));
-  int p[] = {color, key};
-  memcpy(sendbuf, p, sendcount * sizeof(int));
+  int sendbuf[] = {color, key};
   // send {color, key} {color, key}... (int, int)
 
   constexpr int recvcount = sendcount;
   void *recvbuf = malloc(recvcount * commSize * sizeof(int));
-  int status = RDMA_Allgather_exp(sendbuf, sendcount, R_TYPE_INT, recvbuf,
-                                  recvcount, R_TYPE_INT, fromComm);
+  int status = RDMA_Allgather_exp((void *)sendbuf, sendcount, R_TYPE_INT,
+                                  recvbuf, recvcount, R_TYPE_INT, fromComm);
+
   if (status != 0) {
-    printf("%d\n", status);
+#ifdef FFRDMA_DEBUG
+    printf("error in RDMA, status: %d\n", status);
+#endif
+    free(recvbuf);
     return RDMA_INTERN;
   }
 
@@ -122,11 +118,12 @@ int RDMA_Comm_split(RDMA_Comm fromComm, int color, int key,
     });
   }
 
+  free(recvbuf);
+
   // split comm in process
   *newcomm =
       ffrdma::RdmaProcess::Instance().splitComm(fromComm, std::move(configs));
 
-  printf("fromcomm: %d, newcomm: %d\n", fromComm, *newcomm);
   RDMA_Barrier(fromComm);
 
   return RDMA_SUCCESS;
