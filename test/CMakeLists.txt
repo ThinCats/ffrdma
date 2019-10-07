@@ -1,7 +1,7 @@
 include_directories(../include)
 link_libraries(fmpi)
 
-file(GLOB root_src_files "${CMAKE_CURRENT_SOURCE_DIR}/**/*.cc" "${CMAKE_CURRENT_SOURCE_DIR}/**/*.cc")
+file(GLOB root_src_files "${CMAKE_CURRENT_SOURCE_DIR}/**/*.cc" "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
 foreach(filePath ${root_src_files})
   file(RELATIVE_PATH fileRelPath ${CMAKE_CURRENT_SOURCE_DIR} ${filePath})
   string(REGEX MATCH [[([^\.]*)\.cc$]] fileBasename ${fileRelPath})

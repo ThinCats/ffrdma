@@ -7,7 +7,7 @@
 
 int main(int argc, char** argv)
 {
-    RDMA_Init(argc, argv);
+    RDMA_Init(&argc, &argv);
     int local_rank = RDMA_Rank();
     printf("local_rank = %d\n", local_rank);
     int other_rank = local_rank ? 0 : 1;
@@ -65,7 +65,6 @@ int main(int argc, char** argv)
         printf("begin barrier\n");
         RDMA_Barrier();
         printf("end barrier\n");
-        TestIrecv();
         free(recvbuf);
         free(recvbuf_double);
         free(num_double);
@@ -108,7 +107,6 @@ int main(int argc, char** argv)
         printf("\n");
         std::this_thread::sleep_for (std::chrono::seconds(5));
         RDMA_Barrier();
-        TestIrecv();
         free(recvbuf);
         free(recvbuf_double);
         free(num_double);

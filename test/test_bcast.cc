@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv)
 {
-    RDMA_Init(argc, argv);
+    RDMA_Init(&argc, &argv);
     int local_rank = RDMA_Rank();
     printf("local_rank = %d\n", local_rank);
 
@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     }
 
     printf("local_rank:%d   msg:%f %f %f %f\n",local_rank,msg_buf[0],msg_buf[1],msg_buf[2],msg_buf[3]);
-    RDMA_Scatter((void *)msg_buf,8*4,0,0);
+    RDMA_Bcast((void *)msg_buf, 4, R_TYPE_DOUBLE, 0);
     printf("local_rank:%d   msg:%f %f %f %f\n",local_rank,msg_buf[0],msg_buf[1],msg_buf[2],msg_buf[3]);
 
     RDMA_Finalize();
