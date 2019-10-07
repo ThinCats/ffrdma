@@ -466,6 +466,9 @@ int RDMA_Reduce(void *sendbuf, void *recvbuf, int count,
 {
     int local_rank = RDMA_Rank(comm);
     int whole_rank = RDMA_Size(comm);
+
+    count *= type_static[datatype];
+
     // printf("%d %d %d %d\n", local_rank, whole_rank, root, count);
     if (local_rank == root)
     {
@@ -584,10 +587,8 @@ int RDMA_Allreduce(void *sendbuf, void *recvbuf,
 
     RDMA_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
 
-    if (local_rank == 0)
-    {
-        RDMA_Bcast(recvbuf, count, datatype, 0, comm);
-    }
+    RDMA_Bcast(recvbuf, count, datatype, 0, comm);
+
     return 0;
 }
 
