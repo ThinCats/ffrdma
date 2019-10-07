@@ -34,6 +34,8 @@ int RDMA_Allgatherv_exp(void *sendbuf, int sendcount, int sendtype,
                         int recvtype, RDMA_Comm comm = 0);
 int RDMA_Allgather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
                    int recvcount, int recvtype, RDMA_Comm comm = 0);
+int RDMA_Alltoall(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
+                   int recvcount, int recvtype, RDMA_Comm comm = 0);
 int RDMA_Gather(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
                 int recvcount, int recvtype, int root, RDMA_Comm comm = 0);
 int RDMA_Scatter(void *sendbuf, int sendcount, int sendtype, void *recvbuf,
