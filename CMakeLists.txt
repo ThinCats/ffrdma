@@ -8,8 +8,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 if(DEBUG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0")
-  add_definitions( -DFFRDMA_ERROR_CHECK=1 )
-  add_definitions( -DFFRDMA_DEBUG=1 )
+  add_definitions(-DFFRDMA_ERROR_CHECK=1)
+  add_definitions(-DFFRDMA_DEBUG=1)
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 endif(DEBUG)
 
 file(GLOB_RECURSE
