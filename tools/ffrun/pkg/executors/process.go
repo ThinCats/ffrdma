@@ -21,10 +21,13 @@ func StartProcess(ctx context.Context, cfg ProcessExecutionConfig) {
 		Streaming: true,
 	}, cfg.ProgramName, cfg.Args...)
 
-	// Wait to start
-	status := <-cmd.Start()
+	// Dirty
+	go func() {
+		// Wait to start
+		status := <-cmd.Start()
 
-	cfg.Logger = cfg.Logger.WithField("PID", status.PID)
+		cfg.Logger = cfg.Logger.WithField("PID", status.PID)
+	}()
 
 	if cfg.BeforeHook != nil {
 		cfg.BeforeHook(&cfg, cmd.Status())

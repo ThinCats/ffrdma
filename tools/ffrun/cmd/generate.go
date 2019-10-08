@@ -16,7 +16,7 @@ func generateCmd(hostMapNp types.HostMapNumproc, program string, args string, ou
 		HostMapNp: hostMapNp,
 	}
 
-	cmdResultGen := generator.CmdResultGenerator(cfg)
+	cmdResultGen := generator.CmdResultGenerator(cfg, "*")
 	writerGen := generator.DirFileWriterGenerator(outdir)
 	var (
 		res *generator.CmdResult

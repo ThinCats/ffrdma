@@ -89,10 +89,10 @@ func (p *Pool) Run() {
 		}
 		p.wg.Add(1)
 		go StartProcess(p.ctx, exeCfg)
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// wait for one of process stop
-	<-p.notifyCh
 	p.Stop()
 }
 
@@ -102,8 +102,13 @@ func (p *Pool) Stop() {
 	case p.notifyCh <- struct{}{}:
 	default:
 	}
-	p.Logger.Debugf("Wait %d ms for all process\n", p.minWaitTime.Milliseconds())
+	// p.Logger.Debugf("Wait %d ms for all process\n", p.minWaitTime.Milliseconds())
 	time.Sleep(p.minWaitTime)
 	p.cancelFn()
 	p.wg.Wait()
+}
+
+// TaskNum ...
+func (p *Pool) TaskNum() int {
+	return len(p.tasks)
 }
