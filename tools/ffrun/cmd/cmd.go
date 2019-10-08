@@ -17,3 +17,13 @@ func (d *hostConfigDecoder) Decode(s string) error {
 	}
 	return nil
 }
+
+type hostMapPortsDecoder struct {
+	hosts types.HostMapPorts
+}
+
+func (d *hostMapPortsDecoder) Decode(s string) error {
+	var err error
+	d.hosts, err = d.hosts.FromString(s)
+	return err
+}

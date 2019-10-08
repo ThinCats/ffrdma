@@ -47,7 +47,39 @@ func (h HostMapPorts) String() string {
 }
 
 // FromString deserialize from string
+func (h HostMapPorts) FromString(str string) (HostMapPorts, error) {
+	if str == "" {
+		return nil, nil
+	}
+	// node110:100+200+300,node112:200+400+300
+	res := make(HostMapPorts)
+	hostPortsList := strings.Split(str, ",")
+	for _, hostPorts := range hostPortsList {
+		sHostPorts := strings.Split(hostPorts, ":")
+		if len(sHostPorts) != 2 {
+			return nil, errors.New("Invalid format in --hostmap")
+		}
+		host := sHostPorts[0]
+		portsListStr := strings.Split(sHostPorts[1], "+")
+
+		var portsList []int
+		for _, portStr := range portsListStr {
+			port, err := strconv.Atoi(portStr)
+			if err != nil {
+				return nil, errors.New("Invalid format in --hostmap")
+			}
+			portsList = append(portsList, port)
+		}
+		res[host] = portsList
+	}
+	return res, nil
+}
+
+// FromString deserialize from string
 func (h HostMapNumproc) FromString(str string) (HostMapNumproc, error) {
+	if str == "" {
+		return nil, nil
+	}
 	res := make(HostMapNumproc)
 	hostPortList := strings.Split(str, ",")
 	for _, hostPort := range hostPortList {

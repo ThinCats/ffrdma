@@ -74,3 +74,69 @@ func TestHostMapPorts_String(t *testing.T) {
 		})
 	}
 }
+
+func TestHostMapPorts_FromString(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name    string
+		h       HostMapPorts
+		args    args
+		want    HostMapPorts
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "Test 1",
+			h:    nil,
+			args: args{
+				"node110:100+200+300,node112:500+400+300",
+			},
+			want: HostMapPorts{
+				"node110": []int{100, 200, 300},
+				"node112": []int{500, 400, 300},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.h.FromString(tt.args.str)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HostMapPorts.FromString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HostMapPorts.FromString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHostMapNumproc_FromString(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name    string
+		h       HostMapNumproc
+		args    args
+		want    HostMapNumproc
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.h.FromString(tt.args.str)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HostMapNumproc.FromString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HostMapNumproc.FromString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
