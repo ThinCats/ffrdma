@@ -60,7 +60,7 @@ func NewPool(ctx context.Context, logger *logrus.Logger) *Pool {
 	pool := &Pool{}
 	pool.Logger = logger.WithFields(logrus.Fields{})
 	pool.wg = &sync.WaitGroup{}
-	pool.notifyCh = make(chan struct{})
+	pool.notifyCh = make(chan struct{}, 1)
 	pool.ctx, pool.cancelFn = context.WithCancel(ctx)
 	pool.minWaitTime = 3600 * time.Hour
 
@@ -92,6 +92,7 @@ func (p *Pool) Run() {
 		time.Sleep(200 * time.Millisecond)
 	}
 
+	p.Logger.Debugln("Wait for close")
 	<-p.notifyCh
 	// wait for one of process stop
 	p.Stop()
@@ -99,6 +100,7 @@ func (p *Pool) Run() {
 
 // Stop all the process
 func (p *Pool) Stop() {
+	p.Logger.Debugln("Called Pool.Stop()")
 	select {
 	case p.notifyCh <- struct{}{}:
 	default:

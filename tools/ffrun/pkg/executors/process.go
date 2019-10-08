@@ -2,6 +2,7 @@ package executors
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-cmd/cmd"
@@ -16,16 +17,33 @@ type Process struct {
 // StartProcess ...
 func StartProcess(ctx context.Context, cfg ProcessExecutionConfig) {
 	defer cfg.Wg.Done()
+	defer func() {
+		// notify parent to stop
+		select {
+		case cfg.NotfiyCh <- struct{}{}:
+		default:
+			// if block, continue (other goroutine is working)
+		}
+	}()
+
 	cmd := cmd.NewCmdOptions(cmd.Options{
 		Buffered:  false,
 		Streaming: true,
 	}, cfg.ProgramName, cfg.Args...)
 
+	cfg.Logger.Debugln(cfg.ProgramName, strings.Join(cfg.Args, " "))
+	cmd.Start()
+
 	// !! Race and ugly
 	go func() {
-		// Wait to start
-		status := <-cmd.Start()
-		cfg.Logger = cfg.Logger.WithField("PID", status.PID)
+		for {
+			status := cmd.Status()
+			if status.PID != 0 || status.Complete || status.Error != nil {
+				cfg.Logger = cfg.Logger.WithField("PID", status.PID)
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 	}()
 
 	if cfg.BeforeHook != nil {
@@ -62,16 +80,10 @@ func StartProcess(ctx context.Context, cfg ProcessExecutionConfig) {
 	// cacnel log go routine
 	cancelSubFn()
 	cmd.Stop()
+	cfg.Logger.Debugln("Command Stop")
 	// TODO: Figure out why not need to close these channel
 	// close(cmd.Stdout)
 	// close(cmd.Stderr)
-	// notify parent to stop
-	select {
-	case cfg.NotfiyCh <- struct{}{}:
-	default:
-		// if block, continue (other goroutine is working)
-	}
-
 	if cfg.AfterHook != nil {
 		cfg.AfterHook(&cfg, cmd.Status())
 	}

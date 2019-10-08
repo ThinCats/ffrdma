@@ -5,8 +5,6 @@ import (
 	"ffrun/pkg/types"
 	"strconv"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // CmdConfig is use for generate shell command
@@ -50,7 +48,6 @@ func CmdResultGenerator(cfg CmdConfig, localHost string) func() (result *CmdResu
 	}
 	piSlice := algorithm.CalculateRank(hostMapPorts)
 
-	logrus.Info(piSlice, localHost)
 	i := 0
 	return func() (*CmdResult, bool) {
 		for i < len(piSlice) {
