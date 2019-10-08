@@ -33,10 +33,3 @@ target_link_libraries(fmpi rsocket)
 if(BUILD_TEST)
   add_subdirectory(test)
 endif(BUILD_TEST)
-
-source_group(TREE
-             "${CMAKE_CURRENT_SOURCE_DIR}/include"
-             PREFIX
-             "Header Files"
-             FILES
-             ${FMPI_HEADER_LIST})
