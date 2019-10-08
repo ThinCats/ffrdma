@@ -60,7 +60,6 @@ func runCmd(ctx context.Context, hostMapNp types.HostMapNumproc, hostMapPorts ty
 		return
 	}
 
-	logger.Debugln("Generate Generator")
 	cmdResultGen := generator.CmdResultGenerator(cfg, localHost)
 
 	var (
@@ -68,10 +67,8 @@ func runCmd(ctx context.Context, hostMapNp types.HostMapNumproc, hostMapPorts ty
 		end bool = false
 	)
 
-	logger.Debugln("Create Pool")
 	pool := executors.NewPool(context.Background(), logger)
 	for {
-		logger.Debugln("Getting cmdResult")
 		res, end = cmdResultGen()
 		if end {
 			break
