@@ -26,7 +26,10 @@ type CmdResult struct {
 // ToArgv converts cmd result to argv
 func (r *CmdResult) ToArgv() []string {
 	// str += fmt.Sprintf("# Rank %d\n", r.Pi.Rank)
-	argv := []string{r.Program, "--r_myip", r.Pi.Host, "--r_myport", strconv.Itoa(r.Pi.Port), "--r_hostmap", r.HostPorts.String(), "--"}
+	// Use this to support singularity
+	// !! Ugly way
+	argv := strings.Split(r.Program, " ")
+	argv = append(argv, "--r_myip", r.Pi.Host, "--r_myport", strconv.Itoa(r.Pi.Port), "--r_hostmap", r.HostPorts.String(), "--")
 	argv = append(argv, strings.Split(r.Args, " ")...)
 	return argv
 }

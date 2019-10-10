@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ffrun/pkg/executors"
 	"ffrun/pkg/generator"
+	"ffrun/pkg/parser"
 	"ffrun/pkg/types"
 	"ffrun/pkg/utils"
 	"strings"
@@ -14,6 +15,14 @@ import (
 	"github.com/mkideal/cli"
 	"github.com/sirupsen/logrus"
 )
+
+type runCmdConfig struct {
+	Program       string
+	Args          string
+	HostMapNp     types.HostMapNumproc
+	HostPorts     types.HostMapPorts
+	IsSingularity bool
+}
 
 func filterHost(hosts []string) (localHost string, remoteHosts []string) {
 	localAllAddress := utils.ListAllLocalAddress()
@@ -30,25 +39,25 @@ func filterHost(hosts []string) (localHost string, remoteHosts []string) {
 	return localHost, remoteHosts
 }
 
-func runCmd(ctx context.Context, hostMapNp types.HostMapNumproc, hostMapPorts types.HostMapPorts, program string, args string) {
+func runCmd(ctx context.Context, cmdCfg runCmdConfig) {
 
 	cfg := generator.CmdConfig{
-		Program:   program,
-		Args:      args,
-		HostMapNp: hostMapNp,
-		HostPorts: hostMapPorts,
+		Program:   cmdCfg.Program,
+		Args:      cmdCfg.Args,
+		HostMapNp: cmdCfg.HostMapNp,
+		HostPorts: cmdCfg.HostPorts,
 	}
 
 	logger := ctx.Value("logger").(*logrus.Logger)
 
 	var hosts []string
 
-	if hostMapPorts != nil {
-		for host := range hostMapPorts {
+	if cmdCfg.HostPorts != nil {
+		for host := range cmdCfg.HostPorts {
 			hosts = append(hosts, host)
 		}
 	} else {
-		for host := range hostMapNp {
+		for host := range cmdCfg.HostMapNp {
 			hosts = append(hosts, host)
 		}
 	}
@@ -81,10 +90,11 @@ func runCmd(ctx context.Context, hostMapNp types.HostMapNumproc, hostMapPorts ty
 		},
 		)
 
+		argv := res.ToArgv()
 		// ignore program, 1:
 		cfg := executors.TaskConfig{
-			Program:  res.Program,
-			Args:     res.ToArgv()[1:],
+			Program:  argv[0],
+			Args:     argv[1:],
 			Logger:   processLogger,
 			WaitTime: 100 * time.Millisecond,
 		}
@@ -131,9 +141,10 @@ func runCmd(ctx context.Context, hostMapNp types.HostMapNumproc, hostMapPorts ty
 type runT struct {
 	cli.Helper
 	HostConfig    hostConfigDecoder   `cli:"H,Host" usage:"Specify the Host, like node1:2,node2:4"`
-	Program       string              `cli:"*p,program" usage:"the program to launch"`
+	Program       string              `cli:"p,program" usage:"the program to launch"`
 	Debug         bool                `cli:"d,debug" dft:"false" usage:"enable debug log"`
 	HostMapConfig hostMapPortsDecoder `cli:"hostmap" usage:"Specify host map to launch, node1:100+200,node2:300+400"`
+	Singularity   bool                `cli:"s,singularity" usage:"Enable singularity support"`
 	// Master     bool              `cli:"m,master" dft:"false" usage:"as master node, will boot up other slave node"`
 }
 
@@ -152,13 +163,37 @@ var Run = &cli.Command{
 		}
 
 		cmdCtx := context.WithValue(context.Background(), "logger", logger)
+		cmdCfg := runCmdConfig{
+			Program:       argv.Program,
+			Args:          strings.Join(ctx.Args(), " "),
+			HostMapNp:     nil,
+			HostPorts:     nil,
+			IsSingularity: argv.Singularity,
+		}
+		// check mode
 		if argv.HostMapConfig.hosts != nil {
-			runCmd(cmdCtx, nil, argv.HostMapConfig.hosts, argv.Program, strings.Join(ctx.Args(), " "))
+			cmdCfg.HostPorts = argv.HostMapConfig.hosts
 		} else if argv.HostConfig.hosts != nil {
-			runCmd(cmdCtx, argv.HostConfig.hosts, nil, argv.Program, strings.Join(ctx.Args(), " "))
+			cmdCfg.HostMapNp = argv.HostConfig.hosts
 		} else {
 			return errors.New("Error: must specify -H or --hostmap")
 		}
+
+		if !argv.Singularity && argv.Program == "" {
+			return errors.New("Error: must specify -p when not singularity mode")
+		}
+		// Reset program
+		if argv.Singularity {
+			sig := &parser.Singularity{}
+			format, err := sig.Parse(ctx.Args())
+			if err != nil {
+				return err
+			}
+			cmdCfg.Program = format.Head
+			cmdCfg.Args = format.Tail
+		}
+
+		runCmd(cmdCtx, cmdCfg)
 
 		return nil
 	},
